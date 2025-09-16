@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FixedSizeGrid as Grid } from 'react-window';
 import {
   Box,
   Typography,
@@ -152,90 +153,100 @@ const SimpleCandidatesBoard: React.FC = () => {
         </FormControl>
       </Stack>
 
-      {/* Candidates Grid */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-          gap: 2,
-        }}
-      >
-        {candidates.map((candidate) => (
-          <Card key={candidate.id} elevation={2}>
-            <CardContent>
-              <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}>
-                  {getInitials(candidate.name)}
-                </Avatar>
-                <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-                  <Typography variant="h6" noWrap>
-                    {candidate.name}
-                  </Typography>
-                  <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
-                    <EmailIcon fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary" noWrap>
-                      {candidate.email}
+      {/* Virtualized Candidates Grid */}
+      <Box sx={{ height: 700, width: '100%', mb: 2 }}>
+        <Grid
+          columnCount={3}
+          columnWidth={370}
+          height={700}
+          rowCount={Math.ceil(candidates.length / 3)}
+          rowHeight={320}
+          width={1200}
+        >
+          {({ columnIndex, rowIndex, style }) => {
+            const idx = rowIndex * 3 + columnIndex;
+            if (idx >= candidates.length) return null;
+            const candidate = candidates[idx];
+            return (
+              <div style={style} key={candidate.id}>
+                <Card elevation={2} sx={{ m: 1 }}>
+                  <CardContent>
+                    <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
+                      <Avatar sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}>
+                        {getInitials(candidate.name)}
+                      </Avatar>
+                      <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography variant="h6" noWrap>
+                          {candidate.name}
+                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
+                          <EmailIcon fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary" noWrap>
+                            {candidate.email}
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          <PhoneIcon fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary">
+                            {candidate.phone}
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                      <Chip
+                        label={candidate.stage}
+                        size="small"
+                        sx={{
+                          backgroundColor: getStageColor(candidate.stage),
+                          color: 'white',
+                        }}
+                      />
+                    </Stack>
+
+                    <Typography variant="body2" color="text.secondary" mb={1}>
+                      Experience: {candidate.experience}
                     </Typography>
-                  </Stack>
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <PhoneIcon fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {candidate.phone}
-                    </Typography>
-                  </Stack>
-                </Stack>
-                <Chip
-                  label={candidate.stage}
-                  size="small"
-                  sx={{
-                    backgroundColor: getStageColor(candidate.stage),
-                    color: 'white',
-                  }}
-                />
-              </Stack>
 
-              <Typography variant="body2" color="text.secondary" mb={1}>
-                Experience: {candidate.experience}
-              </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                      {candidate.skills.slice(0, 4).map((skill, index) => (
+                        <Chip
+                          key={index}
+                          label={skill}
+                          size="small"
+                          variant="outlined"
+                        />
+                      ))}
+                      {candidate.skills.length > 4 && (
+                        <Chip
+                          label={`+${candidate.skills.length - 4}`}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      )}
+                    </Stack>
+                  </CardContent>
 
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {candidate.skills.slice(0, 4).map((skill, index) => (
-                  <Chip
-                    key={index}
-                    label={skill}
-                    size="small"
-                    variant="outlined"
-                  />
-                ))}
-                {candidate.skills.length > 4 && (
-                  <Chip
-                    label={`+${candidate.skills.length - 4}`}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                  />
-                )}
-              </Stack>
-            </CardContent>
-
-            <CardActions>
-              <IconButton
-                size="small"
-                onClick={() => handleEditCandidate(candidate)}
-                title="Edit Candidate"
-              >
-                <EditIcon />
-              </IconButton>
-              <IconButton
-                size="small"
-                onClick={() => handleArchiveCandidate(candidate.id)}
-                title="Archive Candidate"
-              >
-                <ArchiveIcon />
-              </IconButton>
-            </CardActions>
-          </Card>
-        ))}
+                  <CardActions>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEditCandidate(candidate)}
+                      title="Edit Candidate"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleArchiveCandidate(candidate.id)}
+                      title="Archive Candidate"
+                    >
+                      <ArchiveIcon />
+                    </IconButton>
+                  </CardActions>
+                </Card>
+              </div>
+            );
+          }}
+        </Grid>
       </Box>
 
       {candidates.length === 0 && (
