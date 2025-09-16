@@ -1,3 +1,9 @@
+/* Three-column grid for VirtuosoGrid */
+.three-column-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
 .App {
   text-align: center;
 }
