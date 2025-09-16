@@ -3,18 +3,19 @@ import { Job, Candidate, Assessment, Question, CandidateResponse } from '../type
 
 
 // Seed 25 jobs
+const jobStatuses = ["active", "inactive", "closed"];
 const jobs: Job[] = Array.from({ length: 25 }, (_, i) => ({
   id: i + 1,
   title: `Job ${i + 1}`,
   department: ["Engineering", "Design", "HR", "Marketing"][i % 4],
-  status: ["active", "archived", "closed"][i % 3],
+  status: jobStatuses[i % jobStatuses.length] as "active" | "inactive" | "closed",
   archived: i % 3 === 1,
   description: `Description for job ${i + 1}`,
   requirements: ["Skill A", "Skill B", "Skill C", "Skill D"].slice(0, (i % 4) + 1),
   location: ["Remote", "San Francisco", "New York", "London"][i % 4]
 }));
 
-// Seed 1,000 candidates
+const candidateStages = ["screening", "interview", "offer", "hired", "rejected"];
 const candidates: Candidate[] = Array.from({ length: 1000 }, (_, i) => ({
   id: i + 1,
   name: `Candidate ${i + 1}`,
@@ -23,12 +24,12 @@ const candidates: Candidate[] = Array.from({ length: 1000 }, (_, i) => ({
   status: "active",
   archived: false,
   appliedJobs: [((i % 25) + 1)],
-  stage: ["applied", "screening", "tech", "offer", "hired", "rejected"][i % 6],
+  stage: candidateStages[i % candidateStages.length] as "screening" | "interview" | "offer" | "hired" | "rejected",
   skills: ["Skill A", "Skill B", "Skill C", "Skill D"].slice(0, (i % 4) + 1),
   experience: `${(i % 10) + 1} years`
 }));
 
-// Seed 3 assessments with 10+ questions each
+const questionTypes = ["multiple-choice", "text"];
 const assessments: Assessment[] = Array.from({ length: 3 }, (_, i) => ({
   id: i + 1,
   jobId: i + 1,
@@ -36,9 +37,9 @@ const assessments: Assessment[] = Array.from({ length: 3 }, (_, i) => ({
   questions: Array.from({ length: 12 }, (__, q) => ({
     id: q + 1,
     question: `Question ${q + 1} for Assessment ${i + 1}`,
-    type: ["multiple-choice", "text", "numeric", "file-upload"][q % 4],
-    options: q % 4 === 0 ? ["Option 1", "Option 2", "Option 3"] : undefined,
-    correctAnswer: q % 4 === 0 ? "Option 1" : ""
+    type: questionTypes[q % questionTypes.length] as "multiple-choice" | "text",
+    options: (q % 2 === 0) ? ["Option 1", "Option 2", "Option 3"] : undefined,
+    correctAnswer: (q % 2 === 0) ? "Option 1" : ""
   })),
   timeLimit: 60 + i * 30,
   candidateResponses: []
