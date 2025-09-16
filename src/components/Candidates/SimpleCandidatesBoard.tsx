@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FixedSizeGrid as Grid } from 'react-window';
+import { Grid } from 'react-window';
 import {
   Box,
   Typography,
@@ -8,6 +8,11 @@ import {
   Select,
   MenuItem,
   FormControl,
+  // Cell renderer for react-window Grid
+  const cellRenderer = ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
+    const idx = rowIndex * 3 + columnIndex;
+    if (idx >= candidates.length) return null;
+    const candidate = candidates[idx];
   InputLabel,
   Card,
   CardContent,
@@ -38,29 +43,39 @@ const stages = [
   { id: 'rejected', label: 'Rejected', color: '#f44336' },
 ];
 
+const PAGE_SIZE = 50;
 const SimpleCandidatesBoard: React.FC = () => {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchCandidates();
-  }, []);
+    // eslint-disable-next-line
+  }, [searchTerm, stageFilter, page]);
 
   const fetchCandidates = async () => {
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
       if (stageFilter !== 'all') params.append('stage', stageFilter);
+      params.append('page', page.toString());
+      params.append('pageSize', PAGE_SIZE.toString());
 
       const response = await fetch(`/api/candidates?${params.toString()}`);
-      const candidatesData = await response.json();
-      setCandidates(candidatesData);
+      const data = await response.json();
+      setCandidates(data.candidates);
+      setTotal(data.total);
     } catch (error) {
       console.error('Error fetching candidates:', error);
     }
+    setLoading(false);
   };
 
   const handleCreateCandidate = () => {
@@ -154,102 +169,109 @@ const SimpleCandidatesBoard: React.FC = () => {
       </Stack>
 
       {/* Virtualized Candidates Grid */}
-      <Box sx={{ height: 700, width: '100%', mb: 2 }}>
-        <Grid
-          columnCount={3}
-          columnWidth={370}
-          height={700}
-          rowCount={Math.ceil(candidates.length / 3)}
-          rowHeight={320}
-          width={1200}
-        >
-          {({ columnIndex, rowIndex, style }) => {
-            const idx = rowIndex * 3 + columnIndex;
-            if (idx >= candidates.length) return null;
-            const candidate = candidates[idx];
-            return (
-              <div style={style} key={candidate.id}>
-                <Card elevation={2} sx={{ m: 1 }}>
-                  <CardContent>
-                    <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
-                      <Avatar sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}>
-                        {getInitials(candidate.name)}
-                      </Avatar>
-                      <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-                        <Typography variant="h6" noWrap>
-                          {candidate.name}
-                        </Typography>
-                        <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
-                          <EmailIcon fontSize="small" color="action" />
-                          <Typography variant="body2" color="text.secondary" noWrap>
-                            {candidate.email}
+      {/* Loading Spinner */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
+          <Typography variant="h6">Loading candidates...</Typography>
+        </Box>
+      ) : (
+        <Box sx={{ height: 700, width: '100%', mb: 2 }}>
+          <Grid
+            columnCount={3}
+            columnWidth={() => 370}
+            height={700}
+            rowCount={Math.ceil(candidates.length / 3)}
+            rowHeight={() => 320}
+            width={1200}
+          >
+            {({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
+              const idx = rowIndex * 3 + columnIndex;
+              if (idx >= candidates.length) return null;
+              const candidate = candidates[idx];
+              return (
+                <div style={style} key={candidate.id}>
+                  <Card elevation={2} sx={{ m: 1 }}>
+                    <CardContent>
+                      <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
+                        <Avatar sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}>
+                          {getInitials(candidate.name)}
+                        </Avatar>
+                        <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
+                          <Typography variant="h6" noWrap>
+                            {candidate.name}
                           </Typography>
+                          <Stack direction="row" alignItems="center" spacing={0.5} mb={0.5}>
+                            <EmailIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary" noWrap>
+                              {candidate.email}
+                            </Typography>
+                          </Stack>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <PhoneIcon fontSize="small" color="action" />
+                            <Typography variant="body2" color="text.secondary">
+                              {candidate.phone}
+                            </Typography>
+                          </Stack>
                         </Stack>
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
-                          <PhoneIcon fontSize="small" color="action" />
-                          <Typography variant="body2" color="text.secondary">
-                            {candidate.phone}
-                          </Typography>
-                        </Stack>
+                        <Chip
+                          label={candidate.stage}
+                          size="small"
+                          sx={{
+                            backgroundColor: getStageColor(candidate.stage),
+                            color: 'white',
+                          }}
+                        />
                       </Stack>
-                      <Chip
-                        label={candidate.stage}
+
+                      <Typography variant="body2" color="text.secondary" mb={1}>
+                        Experience: {candidate.experience}
+                      </Typography>
+
+                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        {candidate.skills.slice(0, 4).map((skill, index) => (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            size="small"
+                            variant="outlined"
+                          />
+                        ))}
+                        {candidate.skills.length > 4 && (
+                          <Chip
+                            label={`+${candidate.skills.length - 4}`}
+                            size="small"
+                            variant="outlined"
+                            color="primary"
+                          />
+                        )}
+                      </Stack>
+                    </CardContent>
+
+                    <CardActions>
+                      <IconButton
                         size="small"
-                        sx={{
-                          backgroundColor: getStageColor(candidate.stage),
-                          color: 'white',
-                        }}
-                      />
-                    </Stack>
+                        onClick={() => handleEditCandidate(candidate)}
+                        title="Edit Candidate"
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleArchiveCandidate(candidate.id)}
+                        title="Archive Candidate"
+                      >
+                        <ArchiveIcon />
+                      </IconButton>
+                    </CardActions>
+                  </Card>
+                </div>
+              );
+            }}
+          </Grid>
+        </Box>
+      )}
 
-                    <Typography variant="body2" color="text.secondary" mb={1}>
-                      Experience: {candidate.experience}
-                    </Typography>
-
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {candidate.skills.slice(0, 4).map((skill, index) => (
-                        <Chip
-                          key={index}
-                          label={skill}
-                          size="small"
-                          variant="outlined"
-                        />
-                      ))}
-                      {candidate.skills.length > 4 && (
-                        <Chip
-                          label={`+${candidate.skills.length - 4}`}
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                        />
-                      )}
-                    </Stack>
-                  </CardContent>
-
-                  <CardActions>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleEditCandidate(candidate)}
-                      title="Edit Candidate"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleArchiveCandidate(candidate.id)}
-                      title="Archive Candidate"
-                    >
-                      <ArchiveIcon />
-                    </IconButton>
-                  </CardActions>
-                </Card>
-              </div>
-            );
-          }}
-        </Grid>
-      </Box>
-
-      {candidates.length === 0 && (
+      {(!loading && candidates.length === 0) && (
         <Box textAlign="center" py={4}>
           <Typography variant="h6" color="text.secondary">
             No candidates found
@@ -259,6 +281,28 @@ const SimpleCandidatesBoard: React.FC = () => {
           </Typography>
         </Box>
       )}
+      {/* Pagination Controls */}
+      <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
+        <Button
+          variant="outlined"
+          disabled={page === 1 || loading}
+          onClick={() => setPage(page - 1)}
+          sx={{ mr: 2 }}
+        >
+          Previous
+        </Button>
+        <Typography variant="body2" mx={2}>
+          Page {page} of {Math.ceil(total / PAGE_SIZE)}
+        </Typography>
+        <Button
+          variant="outlined"
+          disabled={page >= Math.ceil(total / PAGE_SIZE) || loading}
+          onClick={() => setPage(page + 1)}
+          sx={{ ml: 2 }}
+        >
+          Next
+        </Button>
+      </Box>
 
       {/* Candidate Form Dialog */}
       <Dialog 

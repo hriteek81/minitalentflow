@@ -113,27 +113,39 @@ export const handlers = [
     const search = url.searchParams.get('search')
     const stage = url.searchParams.get('stage')
     const jobId = url.searchParams.get('jobId')
-    
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '50');
+
     let filteredCandidates = candidates.filter(candidate => !candidate.archived)
-    
+
     if (search) {
       filteredCandidates = filteredCandidates.filter(candidate =>
         candidate.name.toLowerCase().includes(search.toLowerCase()) ||
         candidate.email.toLowerCase().includes(search.toLowerCase())
       )
     }
-    
+
     if (stage && stage !== 'all') {
       filteredCandidates = filteredCandidates.filter(candidate => candidate.stage === stage)
     }
-    
+
     if (jobId) {
       filteredCandidates = filteredCandidates.filter(candidate =>
         candidate.appliedJobs.includes(parseInt(jobId))
       )
     }
-    
-    return HttpResponse.json(filteredCandidates)
+
+    // Pagination
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const paginatedCandidates = filteredCandidates.slice(start, end);
+
+    return HttpResponse.json({
+      candidates: paginatedCandidates,
+      total: filteredCandidates.length,
+      page,
+      pageSize
+    });
   }),
 
   http.post('/api/candidates', async ({ request }) => {
