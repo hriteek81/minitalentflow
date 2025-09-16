@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FixedSizeGrid as Grid } from 'react-window';
+import { VirtuosoGrid } from 'react-virtuoso';
 import {
   Box,
   Typography,
@@ -73,12 +73,12 @@ const SimpleCandidatesBoard: React.FC = () => {
     setLoading(false);
   };
 
-  // Row renderer for react-window List
-  const rowRenderer = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+  // Item renderer for VirtuosoGrid
+  const renderCandidate = (index: number) => {
     const candidate = candidates[index];
     if (!candidate) return null;
     return (
-      <div style={style} key={candidate.id}>
+      <div key={candidate.id} style={{ padding: 8 }}>
         <Card elevation={2} sx={{ m: 1 }}>
           <CardContent>
             <Stack direction="row" spacing={2} alignItems="flex-start" mb={2}>
@@ -247,7 +247,7 @@ const SimpleCandidatesBoard: React.FC = () => {
         </FormControl>
       </Stack>
 
-      {/* Virtualized Candidates List */}
+      {/* Virtualized Candidates Grid with Virtuoso */}
       {/* Loading Spinner */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -255,7 +255,17 @@ const SimpleCandidatesBoard: React.FC = () => {
         </Box>
       ) : (
         <Box sx={{ height: 700, width: '100%', mb: 2 }}>
-          {/* Only using FixedSizeGrid for virtualization */}
+          <VirtuosoGrid
+            totalCount={candidates.length}
+            overscan={200}
+            listClassName="virtuoso-grid-list"
+            itemClassName="virtuoso-grid-item"
+            style={{ height: 700, width: '100%' }}
+            components={{}}
+            itemContent={renderCandidate}
+            useWindowScroll={false}
+            columnCount={3}
+          />
         </Box>
       )}
 
