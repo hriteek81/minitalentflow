@@ -1,103 +1,48 @@
 import { http, HttpResponse } from 'msw'
 import { Job, Candidate, Assessment, Question, CandidateResponse } from '../types'
 
-// Mock data
-const jobs: Job[] = [
-  {
-    id: 1,
-    title: 'Frontend Developer',
-    department: 'Engineering',
-    status: 'active',
-    archived: false,
-    description: 'Looking for a React developer with 3+ years experience',
-    requirements: ['React', 'TypeScript', 'CSS'],
-    location: 'San Francisco'
-  },
-  {
-    id: 2,
-    title: 'Backend Developer',
-    department: 'Engineering', 
-    status: 'active',
-    archived: false,
-    description: 'Node.js backend developer needed',
-    requirements: ['Node.js', 'Express', 'MongoDB'],
-    location: 'New York'
-  },
-  {
-    id: 3,
-    title: 'UX Designer',
-    department: 'Design',
-    status: 'active', 
-    archived: false,
-    description: 'Senior UX designer for mobile apps',
-    requirements: ['Figma', 'Design Systems', 'User Research'],
-    location: 'Remote'
-  }
-]
 
-const candidates: Candidate[] = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '555-1234',
-    status: 'active',
-    archived: false,
-    appliedJobs: [1],
-    stage: 'screening',
-    skills: ['React', 'JavaScript', 'CSS'],
-    experience: '3 years'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith', 
-    email: 'jane@example.com',
-    phone: '555-5678',
-    status: 'active',
-    archived: false,
-    appliedJobs: [2],
-    stage: 'interview',
-    skills: ['Node.js', 'Python', 'SQL'],
-    experience: '5 years'
-  },
-  {
-    id: 3,
-    name: 'Mike Johnson',
-    email: 'mike@example.com', 
-    phone: '555-9012',
-    status: 'active',
-    archived: false,
-    appliedJobs: [3],
-    stage: 'offer',
-    skills: ['UI/UX', 'Figma', 'Prototyping'],
-    experience: '4 years'
-  }
-]
+// Seed 25 jobs
+const jobs: Job[] = Array.from({ length: 25 }, (_, i) => ({
+  id: i + 1,
+  title: `Job ${i + 1}`,
+  department: ["Engineering", "Design", "HR", "Marketing"][i % 4],
+  status: ["active", "archived", "closed"][i % 3],
+  archived: i % 3 === 1,
+  description: `Description for job ${i + 1}`,
+  requirements: ["Skill A", "Skill B", "Skill C", "Skill D"].slice(0, (i % 4) + 1),
+  location: ["Remote", "San Francisco", "New York", "London"][i % 4]
+}));
 
-const assessments: Assessment[] = [
-  {
-    id: 1,
-    jobId: 1,
-    title: 'Frontend Skills Assessment',
-    questions: [
-      { id: 1, question: 'What is React?', type: 'multiple-choice', options: ['Library', 'Framework', 'Language', 'Tool'], correctAnswer: 'Library' },
-      { id: 2, question: 'Explain closures in JavaScript', type: 'text', correctAnswer: '' }
-    ],
-    timeLimit: 60,
-    candidateResponses: []
-  },
-  {
-    id: 2,
-    jobId: 2,
-    title: 'Backend Development Test',
-    questions: [
-      { id: 1, question: 'What is REST API?', type: 'multiple-choice', options: ['Protocol', 'Architecture', 'Framework', 'Database'], correctAnswer: 'Architecture' },
-      { id: 2, question: 'Explain database normalization', type: 'text', correctAnswer: '' }
-    ],
-    timeLimit: 90,
-    candidateResponses: []
-  }
-]
+// Seed 1,000 candidates
+const candidates: Candidate[] = Array.from({ length: 1000 }, (_, i) => ({
+  id: i + 1,
+  name: `Candidate ${i + 1}`,
+  email: `candidate${i + 1}@example.com`,
+  phone: `555-${1000 + i}`,
+  status: "active",
+  archived: false,
+  appliedJobs: [((i % 25) + 1)],
+  stage: ["applied", "screening", "tech", "offer", "hired", "rejected"][i % 6],
+  skills: ["Skill A", "Skill B", "Skill C", "Skill D"].slice(0, (i % 4) + 1),
+  experience: `${(i % 10) + 1} years`
+}));
+
+// Seed 3 assessments with 10+ questions each
+const assessments: Assessment[] = Array.from({ length: 3 }, (_, i) => ({
+  id: i + 1,
+  jobId: i + 1,
+  title: `Assessment ${i + 1}`,
+  questions: Array.from({ length: 12 }, (__, q) => ({
+    id: q + 1,
+    question: `Question ${q + 1} for Assessment ${i + 1}`,
+    type: ["multiple-choice", "text", "numeric", "file-upload"][q % 4],
+    options: q % 4 === 0 ? ["Option 1", "Option 2", "Option 3"] : undefined,
+    correctAnswer: q % 4 === 0 ? "Option 1" : ""
+  })),
+  timeLimit: 60 + i * 30,
+  candidateResponses: []
+}));
 
 export const handlers = [
   // Jobs endpoints
@@ -128,6 +73,12 @@ export const handlers = [
   }),
 
   http.post('/api/jobs', async ({ request }) => {
+    // Artificial latency
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    // Error rate 7%
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const newJob = await request.json() as Partial<Job>
     const job: Job = { 
       ...newJob as Job, 
@@ -139,6 +90,10 @@ export const handlers = [
   }),
 
   http.put('/api/jobs/:id', async ({ params, request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const id = parseInt(params.id as string)
     const updates = await request.json() as Partial<Job>
     const jobIndex = jobs.findIndex(job => job.id === id)
@@ -181,6 +136,10 @@ export const handlers = [
   }),
 
   http.post('/api/candidates', async ({ request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const newCandidate = await request.json() as Partial<Candidate>
     const candidate: Candidate = { 
       ...newCandidate as Candidate, 
@@ -192,6 +151,10 @@ export const handlers = [
   }),
 
   http.put('/api/candidates/:id', async ({ params, request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const id = parseInt(params.id as string)
     const updates = await request.json() as Partial<Candidate>
     const candidateIndex = candidates.findIndex(candidate => candidate.id === id)
@@ -219,6 +182,10 @@ export const handlers = [
   }),
 
   http.post('/api/assessments', async ({ request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const newAssessment = await request.json() as Partial<Assessment>
     const assessment: Assessment = { 
       ...newAssessment as Assessment, 
@@ -230,6 +197,10 @@ export const handlers = [
   }),
 
   http.put('/api/assessments/:id', async ({ params, request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const id = parseInt(params.id as string)
     const updates = await request.json() as Partial<Assessment>
     const assessmentIndex = assessments.findIndex(assessment => assessment.id === id)
@@ -243,6 +214,10 @@ export const handlers = [
   }),
 
   http.post('/api/assessments/:id/submit', async ({ params, request }) => {
+    await new Promise(res => setTimeout(res, Math.random() * 1000 + 200));
+    if (Math.random() < 0.07) {
+      return new HttpResponse('Server error', { status: 500 });
+    }
     const id = parseInt(params.id as string)
     const response = await request.json() as CandidateResponse
     const assessmentIndex = assessments.findIndex(assessment => assessment.id === id)

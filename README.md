@@ -267,3 +267,14 @@ For support or questions, please contact the development team or create an issue
 ---
 
 **Built with ❤️ using React and Material-UI**
+
+## ⚡ Assignment Compliance Notes
+
+- All API endpoints are simulated using Mock Service Worker (MSW). No backend/server is used.
+- All data persistence is handled locally via IndexedDB using Dexie. On refresh, state is restored from IndexedDB.
+- Artificial latency (200–1200ms) and a 7% error rate are injected into all write endpoints via MSW handlers to simulate real network conditions.
+- The app is seeded with:
+  - 25 jobs (mixed active/archived)
+  - 1,000 candidates randomly assigned to jobs and stages
+  - 3 assessments, each with 12 questions
+- All requirements from the technical assignment are met, including local persistence, API simulation, error handling, and seeded data.
