@@ -258,13 +258,12 @@ const SimpleCandidatesBoard: React.FC = () => {
           <VirtuosoGrid
             totalCount={candidates.length}
             overscan={200}
-            listClassName="virtuoso-grid-list"
+            listClassName="virtuoso-grid-list three-column-grid"
             itemClassName="virtuoso-grid-item"
             style={{ height: 700, width: '100%' }}
             components={{}}
             itemContent={renderCandidate}
             useWindowScroll={false}
-            columnCount={3}
           />
         </Box>
       )}
