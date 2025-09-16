@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid } from 'react-window';
+import { FixedSizeGrid as Grid } from 'react-window';
 import {
   Box,
   Typography,
@@ -258,10 +258,10 @@ const SimpleCandidatesBoard: React.FC = () => {
         <Box sx={{ height: 700, width: '100%', mb: 2 }}>
            <Grid
              columnCount={3}
-             columnWidth={() => 370}
+             columnWidth={370}
              height={700}
              rowCount={Math.ceil(candidates.length / 3)}
-             rowHeight={() => 320}
+             rowHeight={320}
              width={1200}
            >
              {cellRenderer as any}
