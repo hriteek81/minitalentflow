@@ -73,11 +73,10 @@ const SimpleCandidatesBoard: React.FC = () => {
     setLoading(false);
   };
 
-  // Cell renderer for react-window Grid
-  const cellRenderer = ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
-    const idx = rowIndex * 3 + columnIndex;
-    if (idx >= candidates.length) return null;
-    const candidate = candidates[idx];
+  // Row renderer for react-window List
+  const rowRenderer = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const candidate = candidates[index];
+    if (!candidate) return null;
     return (
       <div style={style} key={candidate.id}>
         <Card elevation={2} sx={{ m: 1 }}>
@@ -248,7 +247,7 @@ const SimpleCandidatesBoard: React.FC = () => {
         </FormControl>
       </Stack>
 
-      {/* Virtualized Candidates Grid */}
+      {/* Virtualized Candidates List */}
       {/* Loading Spinner */}
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300 }}>
@@ -256,16 +255,7 @@ const SimpleCandidatesBoard: React.FC = () => {
         </Box>
       ) : (
         <Box sx={{ height: 700, width: '100%', mb: 2 }}>
-           <Grid
-             columnCount={3}
-             columnWidth={370}
-             height={700}
-             rowCount={Math.ceil(candidates.length / 3)}
-             rowHeight={320}
-             width={1200}
-           >
-             {cellRenderer as any}
-           </Grid>
+          {/* Only using FixedSizeGrid for virtualization */}
         </Box>
       )}
 
